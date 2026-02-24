@@ -1,0 +1,52 @@
+{
+  "categories": {
+    "업무능력": [
+      {
+        "id": "work_speed_1",
+        "name": "업무 속도 Lv.1",
+        "cost": 500,
+        "effects": { "work_money_bonus": 10 }
+      },
+      {
+        "id": "work_speed_2",
+        "name": "업무 속도 Lv.2",
+        "cost": 1200,
+        "effects": { "work_money_bonus": 20 }
+      },
+      {
+        "id": "work_exp_1",
+        "name": "업무 이해도 Lv.1",
+        "cost": 1500,
+        "effects": { "work_exp_bonus": 3 }
+      }
+    ],
+    "화술": [
+      {
+        "id": "speech_1",
+        "name": "승진확률 증가 Lv.1",
+        "cost": 1000,
+        "effects": { "promotion_rate": 2 }
+      },
+      {
+        "id": "speech_2",
+        "name": "승진확률 증가 Lv.2",
+        "cost": 2500,
+        "effects": { "promotion_rate": 3 }
+      }
+    ],
+    "체력": [
+      {
+        "id": "hp_up_1",
+        "name": "체력 증가 Lv.1",
+        "cost": 700,
+        "effects": { "hp_max": 10, "hp": 10 }
+      },
+      {
+        "id": "mental_up_1",
+        "name": "멘탈 관리 Lv.1",
+        "cost": 900,
+        "effects": { "mental_max": 10, "mental": 10 }
+      }
+    ]
+  }
+}
