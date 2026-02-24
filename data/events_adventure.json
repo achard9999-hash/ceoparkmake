@@ -1,0 +1,94 @@
+{
+  "events": [
+    {
+      "id": "adventure_coffee_escape",
+      "category": "adventure",
+      "title": "카페 탈출",
+      "text": "회의 10분 전. 효진은 회사 1층 카페로 도망가고 싶다.",
+      "choices": [
+        {
+          "label": "아메리카노만 빨리 사오자",
+          "effects": { "hp": 8, "mental": 6, "money": -45 },
+          "result": "커피 한 잔으로 숨통이 트였다."
+        },
+        {
+          "label": "말 나온 김에 디저트까지",
+          "effects": { "mental": 10, "money": -120, "promotion_rate": -1 },
+          "result": "행복했지만 복귀가 늦었다..."
+        }
+      ]
+    },
+    {
+      "id": "adventure_baseball_stream",
+      "category": "adventure",
+      "title": "몰래 야구중계",
+      "text": "오늘 경기 너무 궁금하다. 대시보드 옆에 중계를 띄울까?",
+      "choices": [
+        {
+          "label": "작게 띄워놓고 일도 같이 한다",
+          "effects": { "mental": 8, "exp": 4 },
+          "result": "집중이 조금 흔들렸지만 멘탈은 회복됐다."
+        },
+        {
+          "label": "소리까지 켠다",
+          "effects": { "mental": 12, "promotion_rate": -2 },
+          "result": "옆자리 선배가 한숨을 쉬었다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_yaguhan",
+      "category": "adventure",
+      "title": "야근 안 해!",
+      "text": "추가 야근 요청이 왔다. 오늘은 정말 못 버틴다.",
+      "choices": [
+        {
+          "label": "그래도 한다...",
+          "effects": { "promotion_rate": 2, "hp": -12, "mental": -10, "money": 200 },
+          "result": "성과는 챙겼지만 체력과 멘탈이 갈렸다."
+        },
+        {
+          "label": "정중히 거절한다",
+          "effects": { "mental": 5, "promotion_rate": -2 },
+          "result": "퇴근은 지켰다. 평판은 조금 흔들렸다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_dubung_lunch",
+      "category": "adventure",
+      "title": "두붕 간식 쇼핑",
+      "text": "점심시간. 효진은 두붕 새 간식을 사주고 싶다.",
+      "choices": [
+        {
+          "label": "프리미엄 간식 구매",
+          "effects": { "money": -300, "mental": 10 },
+          "result": "두붕 생각만 해도 기분이 좋아졌다."
+        },
+        {
+          "label": "다음 달 카드값 생각하자...",
+          "effects": { "mental": -2, "money": 0 },
+          "result": "합리적이지만 아쉬움이 남는다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_office_gossip",
+      "category": "adventure",
+      "title": "신나는 뒷담화",
+      "text": "복사기 앞에서 회사 썰이 터졌다. 살짝 끼어들까?",
+      "choices": [
+        {
+          "label": "적당히 공감만 하고 빠진다",
+          "effects": { "promotion_rate": 1, "mental": 4 },
+          "result": "눈치 있게 생존했다."
+        },
+        {
+          "label": "나도 한마디 한다",
+          "effects": { "mental": 8, "promotion_rate": -2 },
+          "result": "속은 시원했지만 누가 들었을지도..."
+        }
+      ]
+    }
+  ]
+}
