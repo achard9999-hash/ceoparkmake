@@ -30,12 +30,14 @@ html, body, [class*="css"] {
     padding: 8px;
     background: #ffffff;
     margin-bottom: 8px;
+    color: #1f2937;   /* 추가 */
 }
 
 .stat-label {
     font-weight: 700;
     font-size: 14px;
     margin-bottom: 4px;
+    color: #1f2937;   /* 추가: 진한 글자색 */
 }
 
 .stat-track {
