@@ -1,0 +1,118 @@
+{
+  "events": [
+    {
+      "id": "boss_weekend",
+      "category": "dialogue",
+      "title": "주말 출근",
+      "speaker": "팀장",
+      "text": "효진씨~ 위에서 일정 당겨달래. 이번 주말에 다같이 나와서 마무리하자.",
+      "choices": [
+        {
+          "label": "네 팀장님, 제가 먼저 정리해둘게요.",
+          "effects": { "promotion_rate": 1, "hp": -10, "mental": -5 },
+          "result": "상사는 만족했지만, 박효진의 멘탈이 갈렸다..."
+        },
+        {
+          "label": "이번 주는 두붕 병원 예약이 있어서요…",
+          "effects": { "promotion_rate": -1, "mental": 3 },
+          "result": "두붕은 지켰다. 하지만 팀장 표정이 싸늘하다."
+        }
+      ]
+    },
+    {
+      "id": "baseball_ticket",
+      "category": "dialogue",
+      "title": "직관의 유혹",
+      "speaker": "알림",
+      "text": "오늘은 잠실 라이벌전! 그런데 하필 임원 보고가 18시에 잡혔다.",
+      "choices": [
+        {
+          "label": "보고 먼저 끝내고 하이라이트 본다.",
+          "effects": { "promotion_rate": 2, "mental": -7 },
+          "result": "보고는 완벽했다. 하지만 직관을 놓친 여운이 길다."
+        },
+        {
+          "label": "오늘은 못 참아. 직관 간다!",
+          "effects": { "promotion_rate": -2, "mental": 12, "money": -50 },
+          "result": "응원가를 부르며 스트레스가 날아갔다!"
+        }
+      ]
+    },
+    {
+      "id": "boyfriend_marriage_talk",
+      "category": "dialogue",
+      "title": "결혼 이야기",
+      "speaker": "남자친구",
+      "text": "우리 5년 만났잖아. 이제는 같이 미래 계획 세워도 되지 않을까?",
+      "choices": [
+        {
+          "label": "좋아. 천천히 같이 준비하자.",
+          "effects": { "money": -3000, "mental": 8, "promotion_rate": 1 },
+          "result": "지출은 있었지만 마음이 단단해졌다."
+        },
+        {
+          "label": "조금만 더 기다려줘… 회사가 너무 바빠.",
+          "effects": { "mental": -4 },
+          "result": "미안한 마음이 남았다."
+        }
+      ]
+    },
+    {
+      "id": "dubung_walk",
+      "category": "dialogue",
+      "title": "두붕 산책",
+      "speaker": "두붕",
+      "text": "(꼬리 흔드는 소리) 퇴근하자마자 두붕이 산책 가자고 애교를 부린다.",
+      "choices": [
+        {
+          "label": "좋아, 15분만 걷자!",
+          "effects": { "mental": 10, "hp": 4, "money": -100 },
+          "result": "두붕도 신났고, 효진도 조금 살아났다."
+        },
+        {
+          "label": "오늘은 너무 힘들어… 내일 길게 가자.",
+          "effects": { "hp": 6, "mental": -5 },
+          "result": "몸은 쉬었지만 마음이 조금 무겁다."
+        }
+      ]
+    },
+    {
+      "id": "sql_incident",
+      "category": "dialogue",
+      "title": "대시보드 사고",
+      "speaker": "시스템",
+      "text": "WHERE 절 확인 없이 쿼리를 돌렸다. 임원용 대시보드 숫자가 이상하다.",
+      "choices": [
+        {
+          "label": "바로 인정하고 수정한다.",
+          "effects": { "promotion_rate": 1, "mental": -2, "exp": 5 },
+          "result": "빠른 수습으로 오히려 신뢰를 지켰다."
+        },
+        {
+          "label": "조용히 덮어본다.",
+          "effects": { "promotion_rate": -2, "mental": -8 },
+          "result": "결국 들켰다. 더 크게 혼났다."
+        }
+      ]
+    },
+    {
+      "id": "h_univ_senior",
+      "category": "dialogue",
+      "title": "H대 선배의 조언",
+      "speaker": "선배",
+      "text": "효진아, 너 분석 잘하잖아. 보고서도 숫자 말고 '메시지'를 먼저 써봐.",
+      "choices": [
+        {
+          "label": "좋은 조언 감사해요. 바로 써먹어볼게요.",
+          "effects": { "exp": 10, "promotion_rate": 1 },
+          "result": "보고서가 훨씬 읽기 좋아졌다."
+        },
+        {
+          "label": "전 숫자로 증명하는 스타일이에요.",
+          "effects": { "exp": 4, "mental": -1 },
+          "result": "틀린 말은 아니지만, 조금 아쉬운 반응이었다."
+        }
+      ]
+    }
+  ]
+}
