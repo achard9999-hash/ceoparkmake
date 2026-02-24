@@ -75,8 +75,149 @@ def do_part_time(g: GameState) -> Optional[str]:
 
 
 # -------------------------
-# 이벤트 관련
+# 이벤트 관련 (중복 방지 + 조건 지원)
 # -------------------------
+def _ensure_event_runtime_fields(g: GameState) -> None:
+    """GameState dataclass를 안 바꾸고 런타임 필드만 동적으로 붙인다."""
+    if not hasattr(g, "recent_event_ids"):
+        g.recent_event_ids = []  # type: ignore[attr-defined]
+
+
+def _is_valid_event(event: Dict[str, Any]) -> bool:
+    """최소 스키마 검증 (깨진 이벤트는 스킵)"""
+    if not isinstance(event, dict):
+        return False
+
+    if not isinstance(event.get("id"), str) or not event.get("id"):
+        return False
+    if not isinstance(event.get("title"), str):
+        return False
+    if not isinstance(event.get("text"), str):
+        return False
+
+    choices = event.get("choices")
+    if not isinstance(choices, list) or len(choices) == 0:
+        return False
+
+    for ch in choices:
+        if not isinstance(ch, dict):
+            return False
+        if not isinstance(ch.get("label"), str):
+            return False
+        # effects/result는 없어도 fallback 처리 가능하지만, effects는 dict 권장
+        effects = ch.get("effects", {})
+        if effects is not None and not isinstance(effects, dict):
+            return False
+
+    return True
+
+
+def _event_matches_conditions(g: GameState, event: Dict[str, Any]) -> bool:
+    """
+    events_* JSON의 선택적 conditions 지원
+    예:
+      "conditions": {
+        "rank_is": "대리",
+        "retire_count_gte": 3,
+        "money_gte": 1000
+      }
+    """
+    cond = event.get("conditions", {})
+    if not cond:
+        return True
+    if not isinstance(cond, dict):
+        return True  # 잘못 들어와도 게임 안 깨지게 통과(원하면 False로 바꿔도 됨)
+
+    # rank 조건
+    rank_is = cond.get("rank_is")
+    if rank_is is not None and g.rank != str(rank_is):
+        return False
+
+    rank_in = cond.get("rank_in")
+    if rank_in is not None:
+        if not isinstance(rank_in, list):
+            return False
+        if g.rank not in [str(x) for x in rank_in]:
+            return False
+
+    rank_not = cond.get("rank_not")
+    if rank_not is not None and g.rank == str(rank_not):
+        return False
+
+    # 숫자 조건
+    def _gte(field_name: str, current_val: int) -> bool:
+        if cond.get(field_name) is None:
+            return True
+        try:
+            return current_val >= int(cond[field_name])
+        except Exception:
+            return False
+
+    def _lte(field_name: str, current_val: int) -> bool:
+        if cond.get(field_name) is None:
+            return True
+        try:
+            return current_val <= int(cond[field_name])
+        except Exception:
+            return False
+
+    if not _gte("retire_count_gte", g.retire_count):
+        return False
+    if not _gte("company_count_gte", g.company_count):
+        return False
+    if not _gte("money_gte", g.money):
+        return False
+    if not _lte("money_lte", g.money):
+        return False
+    if not _gte("exp_gte", g.exp):
+        return False
+    if not _gte("promotion_rate_gte", g.promotion_rate):
+        return False
+
+    return True
+
+
+def _pick_event_with_rules(
+    g: GameState,
+    events: List[Dict[str, Any]],
+    recent_limit: int = 4,
+) -> Optional[Dict[str, Any]]:
+    """
+    규칙:
+    1) 깨진 스키마 이벤트 제외
+    2) conditions 불만족 이벤트 제외
+    3) 최근 이벤트(recent_event_ids) 제외 우선
+    4) 후보 없으면 최근 제외 규칙만 풀고 재시도
+    """
+    _ensure_event_runtime_fields(g)
+
+    valid_events = [e for e in events if _is_valid_event(e)]
+    if not valid_events:
+        return None
+
+    # 조건 필터
+    eligible = [e for e in valid_events if _event_matches_conditions(g, e)]
+    if not eligible:
+        return None
+
+    recent_ids = list(getattr(g, "recent_event_ids", []))
+
+    # 최근 이벤트 제외
+    fresh = [e for e in eligible if e.get("id") not in recent_ids]
+
+    pool = fresh if fresh else eligible
+    chosen = random.choice(pool)
+
+    # 최근 기록 업데이트
+    eid = chosen.get("id")
+    if isinstance(eid, str) and eid:
+        recent_ids.append(eid)
+        recent_ids = recent_ids[-recent_limit:]
+        g.recent_event_ids = recent_ids  # type: ignore[attr-defined]
+
+    return chosen
+
+
 def maybe_trigger_dialogue_event(g: GameState, dialogue_events: List[Dict[str, Any]], chance: float = 0.35) -> bool:
     if g.pending_event is not None:
         return False
@@ -85,7 +226,11 @@ def maybe_trigger_dialogue_event(g: GameState, dialogue_events: List[Dict[str, A
     if random.random() > chance:
         return False
 
-    g.pending_event = random.choice(dialogue_events)
+    picked = _pick_event_with_rules(g, dialogue_events, recent_limit=4)
+    if not picked:
+        return False
+
+    g.pending_event = picked
     push_log(g, f"💬 이벤트 발생: {g.pending_event.get('title', '대화 이벤트')}")
     return True
 
@@ -100,7 +245,11 @@ def maybe_trigger_adventure_event(g: GameState, adventure_events: List[Dict[str,
     if random.random() > chance:
         return False
 
-    g.pending_event = random.choice(adventure_events)
+    picked = _pick_event_with_rules(g, adventure_events, recent_limit=4)
+    if not picked:
+        return False
+
+    g.pending_event = picked
     push_log(g, f"🎲 모험 발생: {g.pending_event.get('title', '모험 이벤트')}")
     return True
 
