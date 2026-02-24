@@ -1,0 +1,29 @@
+{
+  "endings": [
+    {
+      "id": "ending_ceo",
+      "name": "에미드넷 CEO",
+      "description": "박효진은 수많은 야근과 선택 끝에 결국 CEO 자리에 올랐다.",
+      "conditions": {
+        "rank_is": "CEO"
+      }
+    },
+    {
+      "id": "ending_survivor",
+      "name": "생존의 달인",
+      "description": "여러 번 퇴사했지만 끝내 버텨냈다. 효진은 꺾이지 않았다.",
+      "conditions": {
+        "retire_count_gte": 10,
+        "company_count_gte": 11
+      }
+    },
+    {
+      "id": "ending_money_first",
+      "name": "현실주의자",
+      "description": "승진보다 중요한 건 통장 잔고였다. 효진은 현명했다.",
+      "conditions": {
+        "money_gte": 50000
+      }
+    }
+  ]
+}
