@@ -1,616 +1,438 @@
+# ceoparkmake/app.py
+
 import streamlit as st
-import random
-from dataclasses import dataclass, asdict
 
-# =========================================================
-# 박효진는 CEO가 될 수 있을까? - Streamlit Prototype v0.1
-# =========================================================
-
-st.set_page_config(
-    page_title="박효진은 CEO가 될 수 있을까?",
-    page_icon="💼",
-    layout="centered"
+from ui.styles import apply_global_styles
+from ui.components import (
+    render_header,
+    render_status_panel,
+    render_character_panel,
+    render_event_panel,
+    render_logs,
 )
 
-# ---------------------------------------------------------
-# 0) 도트풍 스타일 (간단 버전)
-# ---------------------------------------------------------
-PIXEL_CSS = """
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
-
-html, body, [class*="css"] {
-    font-family: 'Jua', sans-serif;
-}
-
-.main {
-    background: linear-gradient(180deg, #dff1ff 0%, #f7fbff 100%);
-}
-
-.pixel-card {
-    border: 3px solid #333;
-    border-radius: 12px;
-    padding: 12px;
-    background: #ffffff;
-    box-shadow: 4px 4px 0 #999;
-    margin-bottom: 10px;
-}
-
-.pixel-title {
-    font-size: 28px;
-    color: #ff6b35;
-    text-shadow: 1px 1px 0 #fff;
-    margin-bottom: 6px;
-}
-
-.pixel-subtitle {
-    font-size: 18px;
-    color: #2b2b2b;
-}
-
-.stat-label {
-    font-weight: 700;
-    color: #333;
-}
-
-.footer-tip {
-    font-size: 14px;
-    color: #555;
-    background: #fff7d6;
-    border: 2px dashed #d6a400;
-    border-radius: 10px;
-    padding: 8px;
-}
-</style>
-"""
-st.markdown(PIXEL_CSS, unsafe_allow_html=True)
-
-# ---------------------------------------------------------
-# 1) 밸런스 정의
-# ---------------------------------------------------------
-RANKS = [
-    "인턴", "계약직", "정규직", "대리", "과장",
-    "차장", "부장", "본부장", "이사", "COO", "CEO"
-]
-
-PROMOTION_FAIL_LIMIT = {
-    "인턴": 1,
-    "계약직": 2
-}
-DEFAULT_FAIL_LIMIT = 3
-
-BASE_PROMOTION_RATE_BY_RANK = {
-    "인턴": 75,
-    "계약직": 65,
-    "정규직": 55,
-    "대리": 48,
-    "과장": 42,
-    "차장": 35,
-    "부장": 28,
-    "본부장": 22,
-    "이사": 18,
-    "COO": 12,
-    "CEO": 100
-}
-
-WORK_REWARD_BY_RANK = {
-    "인턴": {"money": 40, "exp": 10, "hp_cost": 8, "mental_cost": 5},
-    "계약직": {"money": 70, "exp": 14, "hp_cost": 9, "mental_cost": 5},
-    "정규직": {"money": 110, "exp": 18, "hp_cost": 10, "mental_cost": 6},
-    "대리": {"money": 180, "exp": 22, "hp_cost": 11, "mental_cost": 7},
-    "과장": {"money": 280, "exp": 26, "hp_cost": 12, "mental_cost": 8},
-    "차장": {"money": 420, "exp": 30, "hp_cost": 13, "mental_cost": 9},
-    "부장": {"money": 650, "exp": 34, "hp_cost": 14, "mental_cost": 10},
-    "본부장": {"money": 900, "exp": 38, "hp_cost": 15, "mental_cost": 11},
-    "이사": {"money": 1300, "exp": 42, "hp_cost": 16, "mental_cost": 12},
-    "COO": {"money": 1800, "exp": 46, "hp_cost": 17, "mental_cost": 13},
-    "CEO": {"money": 2500, "exp": 0, "hp_cost": 10, "mental_cost": 8},
-}
-
-EXP_REQUIREMENT_BY_RANK = {
-    "인턴": 100,
-    "계약직": 140,
-    "정규직": 180,
-    "대리": 240,
-    "과장": 300,
-    "차장": 360,
-    "부장": 440,
-    "본부장": 520,
-    "이사": 620,
-    "COO": 800,
-    "CEO": 999999
-}
+from game.state import (
+    init_game_state,
+    push_log,
+    clamp_stats,
+)
+from game.logic import (
+    do_work,
+    do_rest,
+    do_part_time,
+    maybe_trigger_dialogue_event,
+    maybe_trigger_adventure_event,
+    resolve_pending_event_choice,
+    try_promotion,
+    check_for_forced_retirement,
+    retire_and_rehire,
+    check_endings,
+)
+from game.content_loader import (
+    load_dialogue_events,
+    load_adventure_events,
+    load_upgrades,
+    load_endings,
+)
 
 
-# ---------------------------------------------------------
-# 2) 이벤트 데이터 (초기 샘플)
-# ---------------------------------------------------------
-EVENTS = [
-    {
-        "id": "boss_weekend",
-        "title": "주말 출근",
-        "speaker": "팀장",
-        "text": "효진씨~ 위에서 일정 당겨달래. 이번 주말에 다같이 나와서 마무리하자.",
-        "choices": [
-            {
-                "label": "네 팀장님, 제가 먼저 정리해둘게요.",
-                "effects": {"promotion_rate": +1, "hp": -10, "mental": -5},
-                "result": "상사는 만족했지만, 박효진의 멘탈이 갈렸다..."
-            },
-            {
-                "label": "이번 주는 두붕 병원 예약이 있어서요…",
-                "effects": {"promotion_rate": -1, "mental": +3, "rel_boss": -1},
-                "result": "두붕은 지켰다. 하지만 팀장 표정이 싸늘하다."
-            }
-        ]
-    },
-    {
-        "id": "baseball_ticket",
-        "title": "직관의 유혹",
-        "speaker": "알림",
-        "text": "오늘은 라이벌전! 그런데 하필 임원 보고가 18시에 잡혔다.",
-        "choices": [
-            {
-                "label": "보고 먼저 끝내자.",
-                "effects": {"promotion_rate": +2, "mental": -8},
-                "result": "보고는 완벽했다. 하지만 경기 결과를 못 본 게 너무 아쉽다."
-            },
-            {
-                "label": "오늘은 못 참아. 직관 간다!",
-                "effects": {"promotion_rate": -2, "mental": +12, "money": -50},
-                "result": "직관은 최고다. 응원하면서 멘탈이 회복됐다!"
-            }
-        ]
-    },
-    {
-        "id": "boyfriend_marriage",
-        "title": "결혼 얘기",
-        "speaker": "남자친구",
-        "text": "우리 5년 만났잖아. 이제 슬슬 같이 계획 세워볼까?",
-        "choices": [
-            {
-                "label": "좋아. 같이 준비해보자.",
-                "effects": {"money": -5000, "mental": +8, "promotion_rate": +1},
-                "result": "현실은 무겁지만, 마음이 단단해졌다."
-            },
-            {
-                "label": "조금만 더 기다려줘…",
-                "effects": {"mental": -5},
-                "result": "미안한 마음이 남는다."
-            }
-        ]
-    },
-    {
-        "id": "dubung_walk",
-        "title": "두붕 산책",
-        "speaker": "두붕",
-        "text": "(꼬리 흔드는 소리) 퇴근했더니 두붕이 문 앞에서 기다리고 있다.",
-        "choices": [
-            {
-                "label": "그래, 10분만 걷자.",
-                "effects": {"mental": +10, "hp": +4, "money": -100},
-                "result": "두붕이 신났다. 효진도 조금 살아났다."
-            },
-            {
-                "label": "내일 하자… 너무 피곤해.",
-                "effects": {"hp": +6, "mental": -6},
-                "result": "몸은 쉬었지만 마음이 무겁다."
-            }
-        ]
-    },
-    {
-        "id": "sql_disaster",
-        "title": "SQL 사고",
-        "speaker": "시스템",
-        "text": "WHERE 절 확인 안 하고 실행했다. 대시보드 수치가 이상하다.",
-        "choices": [
-            {
-                "label": "바로 인정하고 수정한다.",
-                "effects": {"mental": -3, "promotion_rate": +1},
-                "result": "빠른 수습으로 신뢰를 지켰다."
-            },
-            {
-                "label": "일단 조용히 덮어본다.",
-                "effects": {"mental": -8, "promotion_rate": -2},
-                "result": "결국 들켰다. 더 크게 혼났다."
-            }
-        ]
-    },
-]
+# =========================================================
+# 0) 초기 설정 / 리소스 로드
+# =========================================================
+apply_global_styles()
 
-RETIRE_REASONS = [
-    "번아웃으로 퇴사",
-    "승진 연속 실패로 권고사직",
-    "야근 누적으로 건강 악화",
-    "임원 보고 실수로 퇴사",
-    "두붕 산책을 못 시켜 자책하며 퇴사",
-    "프로젝트 우선순위 변경에 멘탈 붕괴",
-    "직관 못 가서 인생회의 후 퇴사"
-]
+# JSON 데이터(캐시)
+@st.cache_data
+def _load_all_content():
+    return {
+        "dialogue_events": load_dialogue_events(),
+        "adventure_events": load_adventure_events(),
+        "upgrades": load_upgrades(),
+        "endings": load_endings(),
+    }
 
-# ---------------------------------------------------------
-# 3) 상태 모델
-# ---------------------------------------------------------
-@dataclass
-class GameState:
-    name: str = "박효진"
-    company_name: str = "에미드넷"
-    company_count: int = 1
-    rank_index: int = 0  # 인턴
-    hp: int = 100
-    hp_max: int = 100
-    exp: int = 0
-    money: int = 500
-    promotion_rate: int = 10
-    mental: int = 100
-    mental_max: int = 100
-    promotion_fail_count: int = 0
-    retire_count: int = 0
-    title: str = "통계 석사"
-    game_log: list = None
-    pending_event: dict = None
-    achievements: dict = None
-
-    def __post_init__(self):
-        if self.game_log is None:
-            self.game_log = []
-        if self.achievements is None:
-            self.achievements = {
-                "퇴사사유_수집": 0,
-                "직관러": 0,
-                "두붕맘": 0,
-                "악마팀장": 0
-            }
-
-    @property
-    def rank(self):
-        return RANKS[self.rank_index]
-
-    @property
-    def required_exp(self):
-        return EXP_REQUIREMENT_BY_RANK[self.rank]
-
-    @property
-    def fail_limit(self):
-        return PROMOTION_FAIL_LIMIT.get(self.rank, DEFAULT_FAIL_LIMIT)
-
-    @property
-    def can_try_promotion(self):
-        return self.exp >= self.required_exp and self.rank != "CEO"
+content = _load_all_content()
 
 
-def init_state():
-    st.session_state.game = GameState()
-    push_log("에미드넷에 인턴으로 입사했다. 과연 CEO가 될 수 있을까?")
-
-
-def get_game() -> GameState:
+# =========================================================
+# 1) 세션 상태 초기화
+# =========================================================
+def ensure_session():
     if "game" not in st.session_state:
-        init_state()
-    return st.session_state.game
+        st.session_state.game = init_game_state()
+
+    # 구매한 업그레이드 id 저장
+    if "purchased_upgrades" not in st.session_state:
+        st.session_state.purchased_upgrades = set()
+
+    # 발동된 엔딩(중복 팝업 방지)
+    if "triggered_ending_id" not in st.session_state:
+        st.session_state.triggered_ending_id = None
 
 
-def push_log(msg: str):
-    g = get_game()
-    g.game_log.insert(0, msg)
-    g.game_log = g.game_log[:12]  # 최근 12개만
+ensure_session()
+g = st.session_state.game
 
 
-# ---------------------------------------------------------
-# 4) 게임 로직
-# ---------------------------------------------------------
-def clamp_stats(g: GameState):
-    g.hp = max(0, min(g.hp, g.hp_max))
-    g.mental = max(0, min(g.mental, g.mental_max))
-    g.promotion_rate = max(0, min(g.promotion_rate, 100))
+# =========================================================
+# 2) 업그레이드 적용 함수
+# =========================================================
+def _apply_upgrade_effects(game, effects: dict):
+    """
+    upgrades.json 효과 적용
+    - 즉시효과: hp, mental, hp_max, mental_max, promotion_rate
+    - 영구보너스: work_money_bonus, work_exp_bonus (세션 상태에 누적 저장)
+    """
+    if not effects:
+        return
 
-
-def apply_effects(g: GameState, effects: dict):
-    # 기본 스탯
+    # 즉시/스탯 효과
+    if "hp_max" in effects:
+        game.hp_max += int(effects["hp_max"])
+    if "mental_max" in effects:
+        game.mental_max += int(effects["mental_max"])
     if "hp" in effects:
-        g.hp += effects["hp"]
+        game.hp += int(effects["hp"])
     if "mental" in effects:
-        g.mental += effects["mental"]
-    if "money" in effects:
-        g.money += effects["money"]
-    if "exp" in effects:
-        g.exp += effects["exp"]
+        game.mental += int(effects["mental"])
     if "promotion_rate" in effects:
-        g.promotion_rate += effects["promotion_rate"]
+        game.promotion_rate += int(effects["promotion_rate"])
 
-    # 간단 업적 카운트
-    if effects.get("mental", 0) >= 10:
-        g.achievements["두붕맘"] += 1  # 단순 샘플 카운트
+    # 영구 업무 보너스는 세션에 누적
+    if "upgrade_bonuses" not in st.session_state:
+        st.session_state.upgrade_bonuses = {"work_money_bonus": 0, "work_exp_bonus": 0}
+
+    if "work_money_bonus" in effects:
+        st.session_state.upgrade_bonuses["work_money_bonus"] += int(effects["work_money_bonus"])
+    if "work_exp_bonus" in effects:
+        st.session_state.upgrade_bonuses["work_exp_bonus"] += int(effects["work_exp_bonus"])
+
+    clamp_stats(game)
+
+
+def _get_upgrade_bonuses():
+    if "upgrade_bonuses" not in st.session_state:
+        st.session_state.upgrade_bonuses = {"work_money_bonus": 0, "work_exp_bonus": 0}
+    return st.session_state.upgrade_bonuses
+
+
+# =========================================================
+# 3) 게임 액션 래퍼 (공통 후처리 포함)
+# =========================================================
+def _post_action_checks():
+    """액션 후 공통 판정: 강제퇴사 -> 엔딩"""
+    global g
+
+    # 체력/멘탈 바닥 퇴사
+    forced_reason = check_for_forced_retirement(g)
+    if forced_reason:
+        st.session_state.game = retire_and_rehire(g, forced_reason)
+        g = st.session_state.game
+
+    # 엔딩 판정 (최초 1회만)
+    if st.session_state.triggered_ending_id is None:
+        ending = check_endings(g, content["endings"])
+        if ending:
+            st.session_state.triggered_ending_id = ending.get("id")
+            st.session_state.triggered_ending = ending
+
+
+def action_work():
+    """업무 + 업그레이드 보너스 반영 + 이벤트 확률 발생"""
+    global g
+
+    # 기본 업무 수행
+    do_work(g)
+
+    # 업그레이드 보너스 추가 반영
+    bonuses = _get_upgrade_bonuses()
+    bonus_money = int(bonuses.get("work_money_bonus", 0))
+    bonus_exp = int(bonuses.get("work_exp_bonus", 0))
+
+    if bonus_money > 0:
+        g.money += bonus_money
+        push_log(g, f"⚙️ 업무능력 보너스: 돈 +{bonus_money}")
+
+    if bonus_exp > 0:
+        g.exp += bonus_exp
+        push_log(g, f"⚙️ 업무능력 보너스: 경력 +{bonus_exp}")
 
     clamp_stats(g)
 
+    # 업무 후 이벤트 판정 (대화 우선, 모험 후순위)
+    if not maybe_trigger_dialogue_event(g, content["dialogue_events"], chance=0.35):
+        maybe_trigger_adventure_event(g, content["adventure_events"], chance=0.20)
 
-def do_work():
-    g = get_game()
-    reward = WORK_REWARD_BY_RANK[g.rank]
-
-    # 업무 수행
-    g.money += reward["money"]
-    g.exp += reward["exp"]
-    g.hp -= reward["hp_cost"]
-    g.mental -= reward["mental_cost"]
-
-    # 소소한 랜덤 보너스/리스크
-    roll = random.random()
-    if roll < 0.12:
-        g.money += 50
-        push_log("업무 효율이 좋아서 추가 성과금 +50!")
-    elif roll > 0.93:
-        g.mental -= 5
-        push_log("갑작스런 수정 요청… 멘탈 -5")
-
-    clamp_stats(g)
-    push_log(f"[업무] {g.rank} 업무 처리! 돈 +{reward['money']}, 경력 +{reward['exp']}")
-
-    # 이벤트 발생 확률
-    if random.random() < 0.35 and g.pending_event is None:
-        g.pending_event = random.choice(EVENTS)
-        push_log(f"이벤트 발생: {g.pending_event['title']}")
-
-    # 퇴사 판정
-    check_auto_retire()
+    _post_action_checks()
 
 
-def try_promotion():
-    g = get_game()
-    if not g.can_try_promotion:
-        push_log("아직 경력이 부족해서 승진 심사를 볼 수 없다.")
-        return
+def action_rest():
+    do_rest(g)
 
-    # 직급 기본 난이도 + 유저 승진확률 조합
-    base_rate = BASE_PROMOTION_RATE_BY_RANK[g.rank]
-    final_rate = min(95, max(5, base_rate + g.promotion_rate))
+    # 휴식 후 가끔 대화 이벤트
+    maybe_trigger_dialogue_event(g, content["dialogue_events"], chance=0.18)
+    _post_action_checks()
 
-    success = random.random() < (final_rate / 100)
 
-    if success:
-        old_rank = g.rank
-        g.rank_index += 1
-        g.exp = 0
-        g.promotion_fail_count = 0
-        g.promotion_rate = max(0, g.promotion_rate - 3)  # 승진 후 약간 리셋 감각
-        g.money += 500  # 승진 보너스
-        g.hp -= 5
-        clamp_stats(g)
-        push_log(f"🎉 승진 성공! {old_rank} → {g.rank}")
-        if g.rank == "CEO":
-            push_log("👑 박효진이 마침내 에미드넷 CEO가 되었다!")
+def action_part_time():
+    global g
+    reason = do_part_time(g)
+    if reason:
+        st.session_state.game = retire_and_rehire(g, reason)
+        g = st.session_state.game
     else:
-        g.promotion_fail_count += 1
-        g.exp = 0
-        g.mental -= 12
-        g.hp -= 8
-        clamp_stats(g)
-        push_log(f"❌ 승진 실패... ({g.promotion_fail_count}/{g.fail_limit})")
+        maybe_trigger_dialogue_event(g, content["dialogue_events"], chance=0.15)
 
-        if g.promotion_fail_count >= g.fail_limit:
-            retire("승진 연속 실패로 권고사직")
+    _post_action_checks()
 
 
-def rest_action():
-    g = get_game()
-    g.hp += 20
-    g.mental += 10
-    g.money -= 100
-    clamp_stats(g)
-    push_log("카페에서 잠깐 쉬었다. 체력 +20, 멘탈 +10, 돈 -100")
+def action_try_promotion():
+    global g
+    success, retire_reason = try_promotion(g)
 
-
-def side_job_action():
-    g = get_game()
-    # 알바: 광고 대신 간단 보상
-    if random.random() < 0.05:
-        retire("투잡 뛰다 걸려서 권고사직")
-        return
-    reward_money = random.randint(250, 600)
-    reward_exp = random.randint(5, 15)
-    g.money += reward_money
-    g.exp += reward_exp
-    g.hp -= 5
-    g.mental -= 2
-    clamp_stats(g)
-    push_log(f"외부 알바 완료! 돈 +{reward_money}, 경력 +{reward_exp}")
-
-
-def check_auto_retire():
-    g = get_game()
-    if g.hp <= 0:
-        retire("야근 누적으로 건강 악화")
-    elif g.mental <= 0:
-        retire("번아웃으로 퇴사")
-
-
-def retire(reason: str = None):
-    g = get_game()
-    if reason is None:
-        reason = random.choice(RETIRE_REASONS)
-
-    g.retire_count += 1
-    g.achievements["퇴사사유_수집"] += 1
-    push_log(f"💥 퇴사 발생: {reason}")
-
-    # 영구 보너스 느낌 (퇴사할수록 다음 런 약간 강해짐)
-    next_company_count = g.company_count + 1
-    bonus_promotion = min(15, g.retire_count)   # 최대 +15
-    bonus_money = g.retire_count * 100
-
-    # 재시작 (에미드넷 n번째 입사 컨셉)
-    st.session_state.game = GameState(
-        company_name="에미드넷",
-        company_count=next_company_count,
-        money=500 + bonus_money,
-        promotion_rate=10 + bonus_promotion,
-        title=g.title,
-        retire_count=g.retire_count,
-        achievements=g.achievements.copy()
-    )
-    push_log(f"{next_company_count}번째 입사. 퇴사 경험이 쌓여 승진감각이 조금 늘었다.")
-
-
-# ---------------------------------------------------------
-# 5) UI 렌더링
-# ---------------------------------------------------------
-def render_bgm_hint():
-    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-    st.markdown("### 🎵 배경음악 (설계 훅)")
-    st.caption("현재는 프로토타입이라 실제 재생 대신 상태별 BGM 이름만 표시")
-    g = get_game()
-
-    if g.rank == "CEO":
-        bgm = "bgm_ceo_victory.mp3"
-    elif g.pending_event is not None:
-        bgm = "bgm_event_tension.mp3"
-    elif g.hp < 30 or g.mental < 30:
-        bgm = "bgm_burnout_low.mp3"
+    if retire_reason:
+        st.session_state.game = retire_and_rehire(g, retire_reason)
+        g = st.session_state.game
     else:
-        bgm = "bgm_office_day.mp3"
+        # 승진 성공 시 승진 이벤트 감성 로그/대화 가끔
+        if success:
+            push_log(g, "✨ 회사 공기가 조금 달라진 것 같다.")
+        maybe_trigger_dialogue_event(g, content["dialogue_events"], chance=0.25)
 
-    st.info(f"현재 BGM: {bgm}")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-def render_header():
-    g = get_game()
-    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-    st.markdown('<div class="pixel-title">박효진은 CEO가 될 수 있을까?</div>', unsafe_allow_html=True)
-    st.markdown(
-        f"<div class='pixel-subtitle'>{g.company_count}번째 에미드넷 · 현재 직급: <b>{g.rank}</b> · 타이틀: {g.title}</div>",
-        unsafe_allow_html=True
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    _post_action_checks()
 
 
-def render_stats():
-    g = get_game()
+def action_choice(choice_idx: int):
+    global g
+    retire_reason = resolve_pending_event_choice(g, choice_idx)
+    if retire_reason:
+        st.session_state.game = retire_and_rehire(g, retire_reason)
+        g = st.session_state.game
 
-    c1, c2 = st.columns(2)
+    _post_action_checks()
+
+
+# =========================================================
+# 4) 사이드바: 게임 제어 / 디버그성 편의
+# =========================================================
+with st.sidebar:
+    st.markdown("### 🎮 게임 제어")
+
+    if st.button("🔄 새 게임 시작", use_container_width=True):
+        st.session_state.game = init_game_state()
+        st.session_state.purchased_upgrades = set()
+        st.session_state.upgrade_bonuses = {"work_money_bonus": 0, "work_exp_bonus": 0}
+        st.session_state.triggered_ending_id = None
+        if "triggered_ending" in st.session_state:
+            del st.session_state["triggered_ending"]
+        st.rerun()
+
+    st.markdown("---")
+    st.caption("Private Birthday Gift Prototype")
+    st.caption("ceoparkmake / Streamlit MVP")
+
+
+# =========================================================
+# 5) 메인 레이아웃
+# =========================================================
+render_header(g)
+
+left, right = st.columns([1.2, 1.0], vertical_alignment="top")
+
+# -------------------------
+# 좌측: 캐릭터 / 상태 / 액션 / 이벤트
+# -------------------------
+with left:
+    c1, c2 = st.columns([1, 1], vertical_alignment="top")
+
     with c1:
         st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-        st.markdown(f"**💰 돈**: {g.money}")
-        st.markdown(f"**📈 경력**: {g.exp} / {g.required_exp if g.rank != 'CEO' else 'MAX'}")
-        st.progress(min(1.0, g.exp / g.required_exp) if g.rank != "CEO" else 1.0)
-        st.markdown(f"**🎯 승진확률 보너스**: +{g.promotion_rate}%")
-        st.markdown(f"**❌ 승진 실패**: {g.promotion_fail_count}/{g.fail_limit if g.rank != 'CEO' else '-'}")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">👤 캐릭터</div>', unsafe_allow_html=True)
+        render_character_panel(g)
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with c2:
         st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-        st.markdown(f"**❤️ 체력**: {g.hp} / {g.hp_max}")
-        st.progress(g.hp / g.hp_max)
-        st.markdown(f"**🧠 멘탈**: {g.mental} / {g.mental_max}")
-        st.progress(g.mental / g.mental_max)
-        st.markdown(f"**🐶 두붕 상태**: 기다리는 중...")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">📊 상태</div>', unsafe_allow_html=True)
+        render_status_panel(g)
+        st.markdown("</div>", unsafe_allow_html=True)
 
+    # 엔딩 팝업 느낌 패널
+    if st.session_state.get("triggered_ending_id") and st.session_state.get("triggered_ending"):
+        e = st.session_state["triggered_ending"]
+        st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div class="section-title">🏁 엔딩 달성</div>
+            <div class="event-panel">
+              <div class="event-title">{e.get('name', '엔딩')}</div>
+              <div class="event-text">{e.get('description', '')}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-def render_actions():
-    g = get_game()
+    # 이벤트 패널
+    if g.pending_event:
+        st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
+        render_event_panel(g)
 
+        choices = g.pending_event.get("choices", [])
+        for i, ch in enumerate(choices):
+            label = ch.get("label", f"선택지 {i+1}")
+            if st.button(label, key=f"event_choice_{g.pending_event.get('id','evt')}_{i}", use_container_width=True):
+                action_choice(i)
+                st.rerun()
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # 액션 패널 (이벤트 없을 때만 주요 액션)
     st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-    st.markdown("### 🎮 행동")
+    st.markdown('<div class="section-title">🕹️ 행동</div>', unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("💼 업무하기", use_container_width=True):
-            do_work()
+    a1, a2, a3, a4 = st.columns(4)
+    with a1:
+        if st.button("💼 업무", use_container_width=True, disabled=g.pending_event is not None):
+            action_work()
+            st.rerun()
+    with a2:
+        if st.button("☕ 휴식", use_container_width=True, disabled=g.pending_event is not None):
+            action_rest()
+            st.rerun()
+    with a3:
+        if st.button("🎬 알바", use_container_width=True, disabled=g.pending_event is not None):
+            action_part_time()
+            st.rerun()
+    with a4:
+        promo_disabled = (g.pending_event is not None) or (g.rank == "CEO")
+        if st.button("📈 승진", use_container_width=True, disabled=promo_disabled):
+            action_try_promotion()
             st.rerun()
 
-        if st.button("☕ 쉬기", use_container_width=True):
-            rest_action()
-            st.rerun()
-
-    with col2:
-        if st.button("🧾 알바하기", use_container_width=True):
-            side_job_action()
-            st.rerun()
-
-        if st.button("📊 승진 심사", use_container_width=True, disabled=not g.can_try_promotion):
-            try_promotion()
-            st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-def render_event_modal():
-    g = get_game()
-    if g.pending_event is None:
-        return
-
-    ev = g.pending_event
-    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-    st.markdown(f"## {ev['title']}")
-    st.markdown(f"**{ev['speaker']}**")
-    st.write(ev["text"])
-
-    for i, choice in enumerate(ev["choices"]):
-        if st.button(choice["label"], key=f"ev_choice_{ev['id']}_{i}", use_container_width=True):
-            apply_effects(g, choice["effects"])
-            push_log(f"[{ev['title']}] {choice['result']}")
-            # 특정 업적 샘플 카운트
-            if "직관" in ev["title"] and i == 1:
-                g.achievements["직관러"] += 1
-            g.pending_event = None
-            check_auto_retire()
-            st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-def render_achievements():
-    g = get_game()
-    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-    st.markdown("### 🏷️ 진행 현황")
-    st.write(f"- 누적 퇴사 횟수: **{g.retire_count}회**")
-    st.write(f"- 퇴사사유 수집: **{g.achievements['퇴사사유_수집']}개**")
-    st.write(f"- 직관러 포인트: **{g.achievements['직관러']}**")
-    st.write(f"- 두붕맘 포인트: **{g.achievements['두붕맘']}**")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-def render_logs():
-    g = get_game()
-    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
-    st.markdown("### 📜 최근 로그")
-    if not g.game_log:
-        st.write("아직 로그가 없습니다.")
+    # 승진 보조 안내
+    if g.rank != "CEO":
+        if g.can_try_promotion:
+            st.success(f"승진 시도 가능! (경력 {g.exp}/{g.required_exp})")
+        else:
+            st.info(f"승진 조건: 경력 {g.exp}/{g.required_exp}")
     else:
-        for msg in g.game_log:
-            st.write(f"- {msg}")
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.success("👑 CEO 달성! 숨겨진 엔딩/자진퇴사 루트를 다음 버전에서 추가 가능")
 
+    st.markdown("</div>", unsafe_allow_html=True)
 
-def render_footer():
+# -------------------------
+# 우측: 로그 / 업그레이드 / 데이터
+# -------------------------
+with right:
+    # 로그
+    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
+    render_logs(g)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 업그레이드 (MVP)
+    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🧠 스펙업</div>', unsafe_allow_html=True)
+
+    upgrade_cats = content["upgrades"] or {}
+    purchased = st.session_state.purchased_upgrades
+
+    if not upgrade_cats:
+        st.info("upgrades.json 비어있음")
+    else:
+        tabs = st.tabs(list(upgrade_cats.keys()))
+        for tab, cat_name in zip(tabs, upgrade_cats.keys()):
+            with tab:
+                items = upgrade_cats.get(cat_name, [])
+                if not items:
+                    st.caption("항목 없음")
+                    continue
+
+                for item in items:
+                    uid = item.get("id", "")
+                    name = item.get("name", "업그레이드")
+                    cost = int(item.get("cost", 0))
+                    effects = item.get("effects", {})
+
+                    col_a, col_b = st.columns([2.8, 1.2], vertical_alignment="center")
+
+                    with col_a:
+                        effect_texts = []
+                        for k, v in effects.items():
+                            if k == "work_money_bonus":
+                                effect_texts.append(f"업무 돈 +{v}")
+                            elif k == "work_exp_bonus":
+                                effect_texts.append(f"업무 경력 +{v}")
+                            elif k == "promotion_rate":
+                                effect_texts.append(f"승진확률 +{v}%")
+                            elif k == "hp_max":
+                                effect_texts.append(f"최대체력 +{v}")
+                            elif k == "mental_max":
+                                effect_texts.append(f"최대멘탈 +{v}")
+                            elif k == "hp":
+                                effect_texts.append(f"체력 +{v}")
+                            elif k == "mental":
+                                effect_texts.append(f"멘탈 +{v}")
+                            else:
+                                effect_texts.append(f"{k}:{v}")
+
+                        st.markdown(f"**{name}**")
+                        st.caption(f"비용 {cost}원 · " + ", ".join(effect_texts))
+
+                    with col_b:
+                        is_bought = uid in purchased
+                        disabled = is_bought or (g.money < cost)
+                        btn_label = "구매완료" if is_bought else "구입하기"
+
+                        if st.button(btn_label, key=f"upgrade_{uid}", use_container_width=True, disabled=disabled):
+                            g.money -= cost
+                            _apply_upgrade_effects(g, effects)
+                            purchased.add(uid)
+                            push_log(g, f"🛍️ 업그레이드 구매: {name}")
+                            _post_action_checks()
+                            st.rerun()
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # 진행 정보 / 디버그 요약
+    st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">📌 진행 요약</div>', unsafe_allow_html=True)
+
+    bonuses = _get_upgrade_bonuses()
     st.markdown(
-        '<div class="footer-tip">TIP: 초반엔 자주 퇴사해도 괜찮다. 퇴사 경험이 쌓일수록 다음 입사에서 조금 유리해진다.</div>',
-        unsafe_allow_html=True
+        f"""
+        - **현재 직급:** {g.rank}  
+        - **회사 수:** {g.company_count}번째  
+        - **퇴사 횟수:** {g.retire_count}회  
+        - **추가 승진 보너스:** +{g.promotion_rate}%  
+        - **업무 보너스(돈):** +{bonuses.get("work_money_bonus", 0)}  
+        - **업무 보너스(경력):** +{bonuses.get("work_exp_bonus", 0)}  
+        """,
+        unsafe_allow_html=False
     )
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        if st.button("🔄 새 게임", use_container_width=True):
-            init_state()
-            st.rerun()
-    with col2:
-        st.button("💾 저장/불러오기 (추후 구현)", use_container_width=True, disabled=True)
+
+    # 간단 업적 표시
+    if getattr(g, "achievements", None):
+        st.markdown("**업적 카운트(초안)**")
+        for k, v in g.achievements.items():
+            st.caption(f"- {k}: {v}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
-# ---------------------------------------------------------
-# 6) 메인 렌더
-# ---------------------------------------------------------
-def main():
-    render_header()
-    render_stats()
-    render_bgm_hint()
-    render_event_modal()   # 이벤트가 있으면 위에 노출
-    render_actions()
-    render_achievements()
-    render_logs()
-    render_footer()
-
-
-if __name__ == "__main__":
-    main()
+# =========================================================
+# 6) 하단 도움말
+# =========================================================
+st.markdown('<div class="pixel-card">', unsafe_allow_html=True)
+st.markdown(
+    """
+    **플레이 방법 (MVP)**  
+    1) `업무`로 돈/경력을 모으기  
+    2) `휴식`으로 체력/멘탈 관리하기  
+    3) 랜덤 `대화/모험 이벤트` 선택하기  
+    4) 경력이 차면 `승진` 시도  
+    5) 체력/멘탈이 0이 되거나 승진 실패 누적 시 퇴사 → 재입사 루프  
+    """,
+    unsafe_allow_html=False
+)
+st.markdown("</div>", unsafe_allow_html=True)
