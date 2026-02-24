@@ -1,0 +1,81 @@
+{
+  "ranks": [
+    {
+      "name": "인턴",
+      "required_exp": 100,
+      "base_promotion_rate": 75,
+      "fail_limit": 1,
+      "work_reward": { "money": 40, "exp": 10, "hp_cost": 8, "mental_cost": 5 }
+    },
+    {
+      "name": "계약직",
+      "required_exp": 140,
+      "base_promotion_rate": 65,
+      "fail_limit": 2,
+      "work_reward": { "money": 70, "exp": 14, "hp_cost": 9, "mental_cost": 5 }
+    },
+    {
+      "name": "정규직",
+      "required_exp": 180,
+      "base_promotion_rate": 55,
+      "fail_limit": 3,
+      "work_reward": { "money": 110, "exp": 18, "hp_cost": 10, "mental_cost": 6 }
+    },
+    {
+      "name": "대리",
+      "required_exp": 240,
+      "base_promotion_rate": 48,
+      "fail_limit": 3,
+      "work_reward": { "money": 180, "exp": 22, "hp_cost": 11, "mental_cost": 7 }
+    },
+    {
+      "name": "과장",
+      "required_exp": 300,
+      "base_promotion_rate": 42,
+      "fail_limit": 3,
+      "work_reward": { "money": 280, "exp": 26, "hp_cost": 12, "mental_cost": 8 }
+    },
+    {
+      "name": "차장",
+      "required_exp": 360,
+      "base_promotion_rate": 35,
+      "fail_limit": 3,
+      "work_reward": { "money": 420, "exp": 30, "hp_cost": 13, "mental_cost": 9 }
+    },
+    {
+      "name": "부장",
+      "required_exp": 440,
+      "base_promotion_rate": 28,
+      "fail_limit": 3,
+      "work_reward": { "money": 650, "exp": 34, "hp_cost": 14, "mental_cost": 10 }
+    },
+    {
+      "name": "본부장",
+      "required_exp": 520,
+      "base_promotion_rate": 22,
+      "fail_limit": 3,
+      "work_reward": { "money": 900, "exp": 38, "hp_cost": 15, "mental_cost": 11 }
+    },
+    {
+      "name": "이사",
+      "required_exp": 620,
+      "base_promotion_rate": 18,
+      "fail_limit": 3,
+      "work_reward": { "money": 1300, "exp": 42, "hp_cost": 16, "mental_cost": 12 }
+    },
+    {
+      "name": "COO",
+      "required_exp": 800,
+      "base_promotion_rate": 12,
+      "fail_limit": 3,
+      "work_reward": { "money": 1800, "exp": 46, "hp_cost": 17, "mental_cost": 13 }
+    },
+    {
+      "name": "CEO",
+      "required_exp": 999999,
+      "base_promotion_rate": 100,
+      "fail_limit": 99,
+      "work_reward": { "money": 2500, "exp": 0, "hp_cost": 10, "mental_cost": 8 }
+    }
+  ]
+}
