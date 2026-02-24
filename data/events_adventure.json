@@ -3,6 +3,7 @@
     {
       "id": "adventure_coffee_escape",
       "category": "adventure",
+      "speaker": "알림",
       "title": "카페 탈출",
       "text": "회의 10분 전. 효진은 회사 1층 카페로 도망가고 싶다.",
       "choices": [
@@ -21,6 +22,7 @@
     {
       "id": "adventure_baseball_stream",
       "category": "adventure",
+      "speaker": "알림",
       "title": "몰래 야구중계",
       "text": "오늘 경기 너무 궁금하다. 대시보드 옆에 중계를 띄울까?",
       "choices": [
@@ -39,6 +41,7 @@
     {
       "id": "adventure_yaguhan",
       "category": "adventure",
+      "speaker": "팀장",
       "title": "야근 안 해!",
       "text": "추가 야근 요청이 왔다. 오늘은 정말 못 버틴다.",
       "choices": [
@@ -57,6 +60,7 @@
     {
       "id": "adventure_dubung_lunch",
       "category": "adventure",
+      "speaker": "알림",
       "title": "두붕 간식 쇼핑",
       "text": "점심시간. 효진은 두붕 새 간식을 사주고 싶다.",
       "choices": [
@@ -75,6 +79,7 @@
     {
       "id": "adventure_office_gossip",
       "category": "adventure",
+      "speaker": "동기",
       "title": "신나는 뒷담화",
       "text": "복사기 앞에서 회사 썰이 터졌다. 살짝 끼어들까?",
       "choices": [
@@ -87,6 +92,312 @@
           "label": "나도 한마디 한다",
           "effects": { "mental": 8, "promotion_rate": -2 },
           "result": "속은 시원했지만 누가 들었을지도..."
+        }
+      ]
+    },
+
+    {
+      "id": "adventure_midnight_ppt",
+      "category": "adventure",
+      "speaker": "시스템",
+      "title": "새벽 PPT 수선",
+      "text": "임원 보고자료 폰트가 다 깨졌다. 지금 잡으면 내일 살고, 자면 망한다.",
+      "choices": [
+        {
+          "label": "끝까지 고친다",
+          "effects": { "exp": 8, "promotion_rate": 2, "hp": -10, "mental": -6 },
+          "result": "자료는 살렸다. 대신 눈이 죽어간다."
+        },
+        {
+          "label": "핵심 슬라이드만 살린다",
+          "effects": { "exp": 4, "mental": 2, "promotion_rate": 0 },
+          "result": "완벽하진 않지만 실전형 대응이었다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_executive_elevator",
+      "category": "adventure",
+      "speaker": "알림",
+      "title": "엘리베이터 20초",
+      "text": "임원과 단둘이 엘리베이터를 탔다. 지금 프로젝트를 어필할 기회다.",
+      "choices": [
+        {
+          "label": "핵심 성과만 20초로 말한다",
+          "effects": { "promotion_rate": 2, "exp": 3, "mental": -1 },
+          "result": "짧고 강했다. 임원이 고개를 끄덕였다."
+        },
+        {
+          "label": "너무 많이 말한다",
+          "effects": { "promotion_rate": -1, "mental": -3, "exp": 2 },
+          "result": "열심히 말했지만 요점이 흐려졌다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_stats_team_rescue",
+      "category": "adventure",
+      "speaker": "통계팀 동료",
+      "title": "통계팀 긴급 호출",
+      "text": "동료가 집계 로직이 꼬였다며 도움을 요청했다. 내 일도 밀려 있는데...",
+      "choices": [
+        {
+          "label": "같이 본다 (쿼리/로직 점검)",
+          "effects": { "exp": 9, "mental": -2, "promotion_rate": 1 },
+          "result": "힘들었지만 팀에서 믿음이 생겼다."
+        },
+        {
+          "label": "내 일 끝나고 보자고 한다",
+          "effects": { "exp": 2, "mental": 2 },
+          "result": "합리적인 선택. 대신 동료 표정은 약간 서운했다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_dubung_hospital_call",
+      "category": "adventure",
+      "speaker": "동물병원",
+      "title": "두붕 병원 연락",
+      "text": "진료 예약 확인 전화가 왔다. 오늘 야근이 길어질 것 같은데 시간이 애매하다.",
+      "choices": [
+        {
+          "label": "일정 조정하고 꼭 간다",
+          "effects": { "mental": 12, "promotion_rate": -1, "money": -150 },
+          "result": "마음이 놓였다. 오늘 일은 내일 더 빡세지겠지만..."
+        },
+        {
+          "label": "이번 주말로 미룬다",
+          "effects": { "mental": -4, "promotion_rate": 1 },
+          "result": "일정은 지켰지만 마음에 걸린다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_lunch_solo_walk",
+      "category": "adventure",
+      "speaker": "알림",
+      "title": "혼밥 산책 루트",
+      "text": "점심시간 25분 남았다. 혼자 바람 쐬면 정신이 좀 돌아올 것 같다.",
+      "choices": [
+        {
+          "label": "회사 뒤 공원 한 바퀴",
+          "effects": { "hp": 5, "mental": 7 },
+          "result": "햇빛 좀 보니 사람이 됐다."
+        },
+        {
+          "label": "자리에서 그냥 엎드린다",
+          "effects": { "hp": 8, "mental": 1 },
+          "result": "체력은 찼지만 기분 전환은 덜 됐다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_report_ownership",
+      "category": "adventure",
+      "speaker": "부장",
+      "title": "보고서 이름 올리기",
+      "text": "이번 분석 보고서에 누가 메인 작성자로 들어갈지 정해야 한다.",
+      "choices": [
+        {
+          "label": "내가 맡겠다고 손든다",
+          "effects": { "exp": 10, "promotion_rate": 2, "mental": -5 },
+          "result": "부담은 커졌지만 커리어 로그가 남는다."
+        },
+        {
+          "label": "보조 역할로 빠진다",
+          "effects": { "mental": 4, "exp": 3 },
+          "result": "안정적으로 갔다. 대신 임팩트는 약했다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_afterwork_drink",
+      "category": "adventure",
+      "speaker": "팀원들",
+      "title": "갑작스런 회식",
+      "text": "퇴근 10분 전, 단톡방에 회식 공지가 떴다.",
+      "choices": [
+        {
+          "label": "1차만 얼굴 비추고 나온다",
+          "effects": { "promotion_rate": 1, "mental": 3, "money": -120 },
+          "result": "관계도 챙기고, 체력도 아꼈다."
+        },
+        {
+          "label": "끝까지 간다",
+          "effects": { "mental": 8, "hp": -10, "promotion_rate": -1, "money": -250 },
+          "result": "재밌긴 했는데 다음날이 지옥이다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_presentation_swap",
+      "category": "adventure",
+      "speaker": "팀장",
+      "title": "발표자 교체",
+      "text": "발표 직전 팀장이 말했다. '효진씨가 대신 발표해볼래?'",
+      "choices": [
+        {
+          "label": "한다. 지금이 기회다",
+          "effects": { "exp": 12, "promotion_rate": 3, "mental": -6 },
+          "result": "떨렸지만 잘 끝냈다. 얼굴을 확실히 알렸다."
+        },
+        {
+          "label": "준비가 부족하다고 양해 구한다",
+          "effects": { "mental": 2, "promotion_rate": -1 },
+          "result": "리스크는 피했다. 하지만 아쉬운 기회였다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_bugfix_hero",
+      "category": "adventure",
+      "speaker": "시스템",
+      "title": "배포 직전 버그",
+      "text": "배포 30분 전, 숫자 포맷 버그가 발견됐다. 지금 잡으면 영웅, 실패하면 전원 야근.",
+      "choices": [
+        {
+          "label": "바로 수정 들어간다",
+          "effects": { "exp": 11, "promotion_rate": 2, "hp": -8, "mental": -4 },
+          "result": "수정 성공! 팀 채팅방에 박수가 올라왔다."
+        },
+        {
+          "label": "롤백을 제안한다",
+          "effects": { "promotion_rate": 1, "exp": 4, "mental": -1 },
+          "result": "보수적이지만 안전한 판단이었다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_subway_sleep",
+      "category": "adventure",
+      "speaker": "알림",
+      "title": "지하철 종점행",
+      "text": "야근 후 지하철에서 깜빡 졸았다. 눈 떠보니 거의 종점이다.",
+      "choices": [
+        {
+          "label": "편의점 들러 당 충전하고 귀가",
+          "effects": { "hp": 4, "mental": 5, "money": -80 },
+          "result": "당분이 들어가니 간신히 버틸 만하다."
+        },
+        {
+          "label": "그냥 집 가서 바로 잔다",
+          "effects": { "hp": 10, "mental": 2 },
+          "result": "회복은 됐지만 오늘 하루가 너무 길었다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_confidential_chat",
+      "category": "adventure",
+      "speaker": "동기",
+      "title": "비밀 채팅방 초대",
+      "text": "동기가 '임원 평가 정보 도는 방'에 초대해준다고 한다. 솔깃하다.",
+      "choices": [
+        {
+          "label": "정중히 거절한다",
+          "effects": { "promotion_rate": 1, "mental": -1, "exp": 2 },
+          "result": "양심은 편하다. 대신 궁금하긴 하다."
+        },
+        {
+          "label": "들어가서 눈팅만 한다",
+          "effects": { "mental": 3, "promotion_rate": -3 },
+          "result": "재밌긴 했는데, 괜히 찝찝하다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_weekend_side_project",
+      "category": "adventure",
+      "speaker": "알림",
+      "title": "주말 개인프로젝트",
+      "text": "주말이다. 쉬어야 하는데 갑자기 데이터 대시보드 아이디어가 떠올랐다.",
+      "choices": [
+        {
+          "label": "조금만 만든다 (2시간 컷)",
+          "effects": { "exp": 8, "mental": 4, "hp": -4 },
+          "result": "재밌었다. 일과 다른 재미가 있다."
+        },
+        {
+          "label": "밤새 달린다",
+          "effects": { "exp": 14, "mental": 6, "hp": -14 },
+          "result": "결과물은 좋았다. 월요일의 내가 문제다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_exec_mail_mistake",
+      "category": "adventure",
+      "speaker": "시스템",
+      "title": "임원 참조 메일 실수",
+      "text": "메일 참조(cc)에 임원을 넣을지 말지 헷갈린다. 실수하면 분위기 싸해진다.",
+      "choices": [
+        {
+          "label": "한 번 더 확인하고 보낸다",
+          "effects": { "exp": 5, "promotion_rate": 1 },
+          "result": "사소하지만 중요한 실수를 막았다."
+        },
+        {
+          "label": "그냥 보낸다",
+          "effects": { "mental": -6, "promotion_rate": -2 },
+          "result": "역시나 실수가 있었다. 수습하느라 진땀났다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_burnout_snap",
+      "category": "adventure",
+      "speaker": "알림",
+      "title": "회의실 멍때림",
+      "text": "하루 종일 회의+업무+수정. 회의실에서 갑자기 멍해진다. 진짜 한계다.",
+      "choices": [
+        {
+          "label": "10분만 바람 쐬고 온다",
+          "effects": { "hp": 6, "mental": 8, "promotion_rate": -1 },
+          "result": "일정은 조금 밀렸지만, 무너지진 않았다."
+        },
+        {
+          "label": "버틴다. 그냥 버틴다",
+          "effects": { "hp": -12, "mental": -12, "promotion_rate": 1 },
+          "result": "자리엔 앉아 있었지만 사람이 아니었다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_company_card_receipt",
+      "category": "adventure",
+      "speaker": "재무팀",
+      "title": "법카 영수증 누락",
+      "text": "법카 영수증 하나가 안 보인다. 오늘 안에 정리 안 되면 귀찮아진다.",
+      "choices": [
+        {
+          "label": "기억 더듬어 바로 처리",
+          "effects": { "exp": 4, "promotion_rate": 1, "mental": -1 },
+          "result": "귀찮지만 깔끔하게 끝냈다."
+        },
+        {
+          "label": "나중에 하자...",
+          "effects": { "mental": 2, "promotion_rate": -1 },
+          "result": "지금은 편하지만 미래의 내가 욕한다."
+        }
+      ]
+    },
+    {
+      "id": "adventure_security_usb",
+      "category": "adventure",
+      "speaker": "보안팀",
+      "title": "수상한 USB",
+      "text": "회의실 책상에 출처 모를 USB가 놓여 있다. 다들 바빠서 아무도 신경 안 쓴다.",
+      "choices": [
+        {
+          "label": "보안팀에 바로 전달",
+          "effects": { "promotion_rate": 2, "exp": 3 },
+          "result": "보안팀이 고맙다고 했다. 작은 신뢰가 쌓였다."
+        },
+        {
+          "label": "궁금해서 내 PC에 꽂아본다",
+          "effects": { "mental": -8, "promotion_rate": -4 },
+          "result": "다행히 큰일은 없었지만, 진짜 식은땀이 났다.",
+          "retire_reason": "보안정책 위반으로 인사팀 호출"
         }
       ]
     }
